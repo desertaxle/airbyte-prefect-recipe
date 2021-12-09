@@ -1,9 +1,12 @@
-from prefect import Flow, task, Parameter, artifacts
+from datetime import timedelta
+
+from prefect import Flow, Parameter, artifacts, task
+from prefect.run_configs.local import LocalRun
+from prefect.storage.local import Local
 from prefect.tasks.airbyte.airbyte import AirbyteConnectionTask
 from prefect.tasks.dbt.dbt import DbtShellTask
-from prefect.tasks.snowflake.snowflake import SnowflakeQuery
 from prefect.tasks.secrets.base import PrefectSecret
-from datetime import timedelta
+from prefect.tasks.snowflake.snowflake import SnowflakeQuery
 
 sync_airbyte_connection = AirbyteConnectionTask(
     max_retries=3, retry_delay=timedelta(seconds=10)
@@ -41,7 +44,7 @@ def generate_result_markdown(common_committers, common_issue_submitters):
     artifacts.create_markdown("\n".join(markdown_lines))
 
 
-with Flow("Determine common contributors flow") as flow:
+with Flow("Determine common contributors flow", storage=Local(), run_config=LocalRun()) as flow:
     # Airbyte connection strings
     airbyte_github_connection_id = Parameter("AIRBYTE_GITHUB_CONNECTION_ID")
     dbt_github_connection_id = Parameter("DBT_GITHUB_CONNECTION_ID")
